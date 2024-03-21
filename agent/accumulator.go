@@ -9,7 +9,7 @@ import (
 
 type MetricMaker interface {
 	LogName() string
-	MakeMetric(m telegraf.Metric) telegraf.Metric
+	MakeMetric(metric telegraf.Metric) telegraf.Metric
 	Log() telegraf.Logger
 }
 
@@ -17,6 +17,8 @@ type accumulator struct {
 	maker     MetricMaker
 	metrics   chan<- telegraf.Metric
 	precision time.Duration
+	Interval  time.Duration
+	Tags      map[string]string
 }
 
 func NewAccumulator(
@@ -30,6 +32,18 @@ func NewAccumulator(
 	}
 	return &acc
 }
+func (ac *accumulator) SetExtinfo(interval time.Duration, tags map[string]string) {
+	ac.Interval = interval
+	ac.Tags = tags
+}
+
+func (ac *accumulator) Getinterval() time.Duration {
+	return ac.Interval
+}
+
+func (ac *accumulator) GetTags() map[string]string {
+	return ac.Tags
+}
 
 func (ac *accumulator) AddFields(
 	measurement string,
@@ -37,7 +51,7 @@ func (ac *accumulator) AddFields(
 	tags map[string]string,
 	t ...time.Time,
 ) {
-	ac.addMeasurement(measurement, tags, fields, telegraf.Untyped, t...)
+	ac.addFields(measurement, tags, fields, telegraf.Untyped, t...)
 }
 
 func (ac *accumulator) AddGauge(
@@ -46,7 +60,7 @@ func (ac *accumulator) AddGauge(
 	tags map[string]string,
 	t ...time.Time,
 ) {
-	ac.addMeasurement(measurement, tags, fields, telegraf.Gauge, t...)
+	ac.addFields(measurement, tags, fields, telegraf.Gauge, t...)
 }
 
 func (ac *accumulator) AddCounter(
@@ -55,7 +69,7 @@ func (ac *accumulator) AddCounter(
 	tags map[string]string,
 	t ...time.Time,
 ) {
-	ac.addMeasurement(measurement, tags, fields, telegraf.Counter, t...)
+	ac.addFields(measurement, tags, fields, telegraf.Counter, t...)
 }
 
 func (ac *accumulator) AddSummary(
@@ -64,7 +78,7 @@ func (ac *accumulator) AddSummary(
 	tags map[string]string,
 	t ...time.Time,
 ) {
-	ac.addMeasurement(measurement, tags, fields, telegraf.Summary, t...)
+	ac.addFields(measurement, tags, fields, telegraf.Summary, t...)
 }
 
 func (ac *accumulator) AddHistogram(
@@ -73,7 +87,7 @@ func (ac *accumulator) AddHistogram(
 	tags map[string]string,
 	t ...time.Time,
 ) {
-	ac.addMeasurement(measurement, tags, fields, telegraf.Histogram, t...)
+	ac.addFields(measurement, tags, fields, telegraf.Histogram, t...)
 }
 
 func (ac *accumulator) AddMetric(m telegraf.Metric) {
@@ -83,7 +97,7 @@ func (ac *accumulator) AddMetric(m telegraf.Metric) {
 	}
 }
 
-func (ac *accumulator) addMeasurement(
+func (ac *accumulator) addFields(
 	measurement string,
 	tags map[string]string,
 	fields map[string]interface{},

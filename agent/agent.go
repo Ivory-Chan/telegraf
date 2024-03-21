@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/benbjohnson/clock"
 	"log"
 	"os"
 	"runtime"
@@ -563,6 +564,38 @@ func (a *Agent) gatherLoop(
 			if err != nil {
 				acc.AddError(err)
 			}
+
+			//fmt.Printf("\nGather end ----> ", time.Now().Format("2006-01-02 15:04:05"))
+			if input.Config.DynamicInterval {
+				// 上一次任务运行结束之后，触发抖动并再次触发
+				go func() {
+
+					//fmt.Printf("\nGather start by dynamic interval ----> ", time.Now().Format("2006-01-02 15:04:05"))
+
+					t, ok := ticker.(*UnalignedTicker)
+					if ok {
+
+						clk := clock.New()
+						jitter := internal.RandomDuration(input.Config.CollectionJitter) + input.Config.CollectionOffset
+
+						if jitter.Milliseconds() == 0 {
+							// 若未设置抖动，添加默认抖动范围
+							jitter = internal.RandomDuration(1 * time.Second)
+						}
+
+						err := sleep(ctx, jitter, clk)
+						if err != nil {
+							return
+						}
+
+						select {
+						case t.ch <- clk.Now():
+						default:
+						}
+					}
+				}()
+			}
+
 		case <-ctx.Done():
 			return
 		}

@@ -66,6 +66,7 @@ type InputConfig struct {
 	Name             string
 	Alias            string
 	ID               string
+	DynamicInterval  bool // if true, new job will start after the end of last job immediately！！！
 	Interval         time.Duration
 	CollectionJitter time.Duration
 	CollectionOffset time.Duration

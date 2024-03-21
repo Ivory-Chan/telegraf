@@ -6,6 +6,9 @@ import (
 
 // Accumulator allows adding metrics to the processing flow.
 type Accumulator interface {
+	SetExtinfo(interval time.Duration, tags map[string]string)
+	GetTags() map[string]string
+	Getinterval() time.Duration
 	// AddFields adds a metric to the accumulator with the given measurement
 	// name, fields, and tags (and timestamp). If a timestamp is not provided,
 	// then the accumulator sets it to "now".

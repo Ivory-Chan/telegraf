@@ -1436,6 +1436,7 @@ func (c *Config) buildInput(name string, tbl *ast.Table) (*models.InputConfig, e
 	c.getFieldString(tbl, "name_suffix", &cp.MeasurementSuffix)
 	c.getFieldString(tbl, "name_override", &cp.NameOverride)
 	c.getFieldString(tbl, "alias", &cp.Alias)
+	c.getFieldBool(tbl, "dynamic_interval", &cp.DynamicInterval)
 
 	cp.Tags = make(map[string]string)
 	if node, ok := tbl.Fields["tags"]; ok {
@@ -1505,6 +1506,7 @@ func (c *Config) missingTomlField(_ reflect.Type, key string) error {
 		"fielddrop", "fieldexclude", "fieldinclude", "fieldpass", "flush_interval", "flush_jitter",
 		"grace",
 		"interval",
+		"dynamic_interval",
 		"lvm", // What is this used for?
 		"metric_batch_size", "metric_buffer_limit", "metricpass",
 		"name_override", "name_prefix", "name_suffix", "namedrop", "namedrop_separator", "namepass", "namepass_separator",
